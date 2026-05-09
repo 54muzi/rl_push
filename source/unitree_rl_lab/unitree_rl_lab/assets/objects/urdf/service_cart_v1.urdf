@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+<robot name="service_cart_v1">
+  <!--
+    Service cart v1.0
+    - Minimal pushable cart model for Isaac Lab interaction.
+    - The cart body and four fixed wheels are one rigid link.
+    - A prismatic joint constrains motion to the local X axis, which is the
+      longest side of the rectangular body.
+  -->
+
+  <link name="world"/>
+
+  <link name="cart_base">
+    <inertial>
+      <origin xyz="0 0 0.34" rpy="0 0 0"/>
+      <mass value="18.0"/>
+      <inertia
+        ixx="0.55"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="2.20"
+        iyz="0.0"
+        izz="2.35"/>
+    </inertial>
+
+    <visual name="box_visual">
+      <origin xyz="0 0 0.42" rpy="0 0 0"/>
+      <geometry>
+        <box size="1.2 0.45 0.35"/>
+      </geometry>
+      <material name="cart_body_dark_gray">
+        <color rgba="0.18 0.24 0.28 1.0"/>
+      </material>
+    </visual>
+    <collision name="box_collision">
+      <origin xyz="0 0 0.42" rpy="0 0 0"/>
+      <geometry>
+        <box size="1.2 0.45 0.35"/>
+      </geometry>
+    </collision>
+
+    <visual name="front_left_wheel_visual">
+      <origin xyz="0.45 0.255 0.09" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.09" length="0.07"/>
+      </geometry>
+      <material name="wheel_black">
+        <color rgba="0.02 0.025 0.03 1.0"/>
+      </material>
+    </visual>
+    <collision name="front_left_wheel_collision">
+      <origin xyz="0.45 0.255 0.09" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.09" length="0.07"/>
+      </geometry>
+    </collision>
+
+    <visual name="front_right_wheel_visual">
+      <origin xyz="0.45 -0.255 0.09" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.09" length="0.07"/>
+      </geometry>
+      <material name="wheel_black"/>
+    </visual>
+    <collision name="front_right_wheel_collision">
+      <origin xyz="0.45 -0.255 0.09" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.09" length="0.07"/>
+      </geometry>
+    </collision>
+
+    <visual name="rear_left_wheel_visual">
+      <origin xyz="-0.45 0.255 0.09" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.09" length="0.07"/>
+      </geometry>
+      <material name="wheel_black"/>
+    </visual>
+    <collision name="rear_left_wheel_collision">
+      <origin xyz="-0.45 0.255 0.09" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.09" length="0.07"/>
+      </geometry>
+    </collision>
+
+    <visual name="rear_right_wheel_visual">
+      <origin xyz="-0.45 -0.255 0.09" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.09" length="0.07"/>
+      </geometry>
+      <material name="wheel_black"/>
+    </visual>
+    <collision name="rear_right_wheel_collision">
+      <origin xyz="-0.45 -0.255 0.09" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.09" length="0.07"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="slider_joint" type="prismatic">
+    <parent link="world"/>
+    <child link="cart_base"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-100.0" upper="100.0" effort="1000.0" velocity="5.0"/>
+    <dynamics damping="1.5" friction="1.5"/>
+  </joint>
+</robot>
