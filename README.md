@@ -1,16 +1,15 @@
-# Unitree RL Lab
+# Unitree RL Lab (Fork)
 
 [![IsaacSim](https://img.shields.io/badge/IsaacSim-5.1.0-silver.svg)](https://docs.omniverse.nvidia.com/isaacsim/latest/overview.html)
 [![Isaac Lab](https://img.shields.io/badge/IsaacLab-2.3.0-silver)](https://isaac-sim.github.io/IsaacLab)
+[![rsl-rl](https://img.shields.io/badge/rsl_rl-5.0.1-blue)](https://github.com/leggedrobotics/rsl_rl)
 [![License](https://img.shields.io/badge/license-Apache2.0-yellow.svg)](https://opensource.org/license/apache-2-0)
-[![Discord](https://img.shields.io/badge/-Discord-5865F2?style=flat&logo=Discord&logoColor=white)](https://discord.gg/ZwcVwxv5rq)
 
+基于 [Unitree RL Lab](https://github.com/unitreerobotics/unitree_rl_lab) 的修改版本，适配 **rsl-rl-lib 5.x** 并修复 G1 机器人的加载问题。
 
 ## Overview
 
-This project provides a set of reinforcement learning environments for Unitree robots, built on top of [IsaacLab](https://github.com/isaac-sim/IsaacLab).
-
-Currently supports Unitree **Go2**, **H1** and **G1-29dof** robots.
+Reinforcement learning training and deployment for Unitree robots (Go2, Go2W, B2, H1, H1_2, G1-23dof, G1-29dof). Built on NVIDIA IsaacLab/IsaacSim with RSL-RL for PPO policy training. Policies are trained in simulation, exported as ONNX, and deployed to real robots via a C++ controller.
 
 <div align="center">
 
@@ -20,17 +19,53 @@ Currently supports Unitree **Go2**, **H1** and **G1-29dof** robots.
 
 </div>
 
+## Changes from Upstream
+
+相比原版 [unitreerobotics/unitree_rl_lab](https://github.com/unitreerobotics/unitree_rl_lab)，本 fork 做了以下修改：
+
+### 1. G1 机器人切换为 URDF 加载方式
+
+原版 G1 使用 USD 模型加载，但 USD 文件中 link prims 缺少 `UsdPhysics.RigidBodyAPI`，导致 IsaacLab 创建场景时抛出：
+
+```
+ValueError: No contact sensors added to the prim: '/World/envs/env_0/Robot'.
+This means that no rigid bodies are present under this prim.
+```
+
+本 fork 将 G1-23dof、G1-29dof、G1-29dof-Mimic 三个配置从 `UnitreeUsdFileCfg` 切换为 `UnitreeUrdfFileCfg`，使用 URDF 方式加载（即官方 README 中的 Method 2）。
+
+### 2. 适配 rsl-rl-lib 5.x
+
+原版代码针对 rsl-rl-lib 2.3.x，与 5.x 存在不兼容：
+
+- `KeyError: 'class_name'` — 5.x 要求 `actor`/`critic` 字段替代旧的 `policy` 字段
+- `TypeError: ... unexpected keyword argument 'stochastic'` — 5.x 的 `MLPModel` 不接受废弃参数
+
+修改内容：
+- 两个 agent 配置 (`locomotion/agents/rsl_rl_ppo_cfg.py`, `mimic/agents/rsl_rl_ppo_cfg.py`) 从 `RslRlPpoActorCriticCfg` 迁移到 `RslRlMLPModelCfg`
+- `train.py` 和 `play.py` 中添加字典过滤，移除 5.x 不接受的废弃字段
+
+### Modified Files
+
+| File | Change |
+|------|--------|
+| `source/.../assets/robots/unitree.py` | G1 configs: USD -> URDF; set `UNITREE_ROS_DIR` |
+| `source/.../tasks/locomotion/agents/rsl_rl_ppo_cfg.py` | Adapt to rsl-rl 5.x actor/critic format |
+| `source/.../tasks/mimic/agents/rsl_rl_ppo_cfg.py` | Same as above |
+| `scripts/rsl_rl/train.py` | Filter deprecated config fields for rsl-rl 5.x |
+| `scripts/rsl_rl/play.py` | Same as above |
+
 ## Installation
 
 - Install Isaac Lab by following the [installation guide](https://isaac-sim.github.io/IsaacLab/main/source/setup/installation/index.html).
 - Install the Unitree RL IsaacLab standalone environments.
 
-  - Clone or copy this repository separately from the Isaac Lab installation (i.e. outside the `IsaacLab` directory):
+  - Clone this repository separately from the Isaac Lab installation:
 
     ```bash
-    git clone https://github.com/unitreerobotics/unitree_rl_lab.git
+    git clone https://github.com/54muzi/rl_push.git
     ```
-  - Use a python interpreter that has Isaac Lab installed, install the library in editable mode using:
+  - Use a python interpreter that has Isaac Lab installed, install the library in editable mode:
 
     ```bash
     conda activate env_isaaclab
@@ -39,112 +74,112 @@ Currently supports Unitree **Go2**, **H1** and **G1-29dof** robots.
     ```
 - Download unitree robot description files
 
-  *Method 1: Using USD Files*
-  - Download unitree usd files from [unitree_model](https://huggingface.co/datasets/unitreerobotics/unitree_model/tree/main), keeping folder structure
+  *Method 1: Using USD Files* (Go2, H1, B2)
+  - Download unitree usd files from [unitree_model](https://huggingface.co/datasets/unitreerobotics/unitree_model/tree/main)
     ```bash
     git clone https://huggingface.co/datasets/unitreerobotics/unitree_model
     ```
   - Config `UNITREE_MODEL_DIR` in `source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py`.
 
+  *Method 2: Using URDF Files [Required for G1]* Only for IsaacSim >= 5.0
+  - Download unitree robot urdf files from [unitree_ros](https://github.com/unitreerobotics/unitree_ros)
     ```bash
-    UNITREE_MODEL_DIR = "</home/user/projects/unitree_usd>"
+    git clone https://github.com/unitreerobotics/unitree_ros.git
     ```
-
-  *Method 2: Using URDF Files [Recommended]* Only for Isaacsim >= 5.0
-  -  Download unitree robot urdf files from [unitree_ros](https://github.com/unitreerobotics/unitree_ros)
-      ```
-      git clone https://github.com/unitreerobotics/unitree_ros.git
-      ```
   - Config `UNITREE_ROS_DIR` in `source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py`.
-    ```bash
-    UNITREE_ROS_DIR = "</home/user/projects/unitree_ros/unitree_ros>"
-    ```
-  - [Optional]: change *robot_cfg.spawn* if you want to use urdf files
 
+- Verify that the environments are correctly installed:
 
+  ```bash
+  ./unitree_rl_lab.sh -l
+  ./unitree_rl_lab.sh -t --task Unitree-G1-29dof-Velocity
+  ```
 
-- Verify that the environments are correctly installed by:
+## Usage
 
-  - Listing the available tasks:
+```bash
+# Train a locomotion policy
+./unitree_rl_lab.sh -t --task Unitree-G1-29dof-Velocity
+# or: python scripts/rsl_rl/train.py --headless --task Unitree-G1-29dof-Velocity
 
-    ```bash
-    ./unitree_rl_lab.sh -l # This is a faster version than isaaclab
-    ```
-  - Running a task:
+# Play/export a trained checkpoint (exports ONNX + JIT)
+./unitree_rl_lab.sh -p --task Unitree-G1-29dof-Velocity
 
-    ```bash
-    ./unitree_rl_lab.sh -t --task Unitree-G1-29dof-Velocity # support for autocomplete task-name
-    # same as
-    python scripts/rsl_rl/train.py --headless --task Unitree-G1-29dof-Velocity
-    ```
-  - Inference with a trained agent:
+# Resume interrupted training
+python scripts/rsl_rl/train.py --headless --task Unitree-G1-29dof-Velocity --resume
 
-    ```bash
-    ./unitree_rl_lab.sh -p --task Unitree-G1-29dof-Velocity # support for autocomplete task-name
-    # same as
-    python scripts/rsl_rl/play.py --task Unitree-G1-29dof-Velocity
-    ```
+# List all registered environments
+./unitree_rl_lab.sh -l
+
+# Build C++ deploy controller
+cd deploy/robots/g1_29dof && mkdir build && cd build && cmake .. && make
+
+# Lint
+pre-commit run --all-files
+
+# Monitor training with TensorBoard
+tensorboard --logdir logs/rsl_rl/
+```
+
+## Architecture
+
+### Data flow
+
+`IsaacSim training -> ONNX + deploy.yaml export -> C++ controller loads model -> real robot via unitree_sdk2 (DDS)`
+
+### Python side (`source/unitree_rl_lab/`)
+
+- **`assets/robots/unitree.py`** — Articulation configs for all robots (USD/URDF paths, actuator params, joint mappings).
+- **`tasks/locomotion/`** — Velocity-tracking MDP per robot. Each robot has `velocity_env_cfg.py` defining scene, observations, actions, rewards, terminations, curriculum, events. Shared MDP logic in `mdp/` subdirs.
+- **`tasks/mimic/`** — Motion-mimicry tasks (G1-29dof only: dance_102, gangnam_style).
+
+### Scripts (`scripts/rsl_rl/`)
+
+- **`train.py`** — Entry point using `@hydra_task_config`. Creates Gym env, wraps for RSL-RL, runs `OnPolicyRunner.learn()`.
+- **`play.py`** — Loads checkpoint, runs inference, exports policy as ONNX/JIT.
+
+### C++ deploy (`deploy/`)
+
+- FSM: `Passive -> FixStand -> RLBase` (and `Mimic` for G1).
+- `include/` — Shared headers: FSM framework, ONNX inference wrapper.
+- `robots/<robot>/` — Per-robot `main.cpp`, `config/config.yaml`. Each has its own `CMakeLists.txt`.
+- Runtime deps: Boost, yaml-cpp, Eigen3, spdlog, fmt, unitree_sdk2, onnxruntime 1.22.0.
 
 ## Deploy
-
-After the model training is completed, we need to perform sim2sim on the trained strategy in Mujoco to test the performance of the model.
-Then deploy sim2real.
 
 ### Setup
 
 ```bash
-# Install dependencies
 sudo apt install -y libyaml-cpp-dev libboost-all-dev libeigen3-dev libspdlog-dev libfmt-dev
-# Install unitree_sdk2
 git clone git@github.com:unitreerobotics/unitree_sdk2.git
-cd unitree_sdk2
-mkdir build && cd build
-cmake .. -DBUILD_EXAMPLES=OFF # Install on the /usr/local directory
-sudo make install
-# Compile the robot_controller
-cd unitree_rl_lab/deploy/robots/g1_29dof # or other robots
-mkdir build && cd build
-cmake .. && make
+cd unitree_sdk2 && mkdir build && cd build
+cmake .. -DBUILD_EXAMPLES=OFF && sudo make install
+cd unitree_rl_lab/deploy/robots/g1_29dof && mkdir build && cd build && cmake .. && make
 ```
 
-### Sim2Sim
+### Sim2Sim (Mujoco)
 
-Installing the [unitree_mujoco](https://github.com/unitreerobotics/unitree_mujoco?tab=readme-ov-file#installation).
-
-- Set the `robot` at `/simulate/config.yaml` to g1
-- Set `domain_id` to 0
-- Set `enable_elastic_hand` to 1
-- Set `use_joystck` to 1.
+Install [unitree_mujoco](https://github.com/unitreerobotics/unitree_mujoco?tab=readme-ov-file#installation), then:
 
 ```bash
-# start simulation
-cd unitree_mujoco/simulate/build
-./unitree_mujoco
-# ./unitree_mujoco -i 0 -n eth0 -r g1 -s scene_29dof.xml # alternative
-```
-
-```bash
-cd unitree_rl_lab/deploy/robots/g1_29dof/build
-./g1_ctrl
-# 1. press [L2 + Up] to set the robot to stand up
-# 2. Click the mujoco window, and then press 8 to make the robot feet touch the ground.
-# 3. Press [R1 + X] to run the policy.
-# 4. Click the mujoco window, and then press 9 to disable the elastic band.
+cd unitree_mujoco/simulate/build && ./unitree_mujoco
+cd unitree_rl_lab/deploy/robots/g1_29dof/build && ./g1_ctrl
+# 1. Press [L2 + Up] to stand up
+# 2. Click mujoco window, press 8 to touch ground
+# 3. Press [R1 + X] to run policy
+# 4. Click mujoco window, press 9 to disable elastic band
 ```
 
 ### Sim2Real
 
-You can use this program to control the robot directly, but make sure the on-borad control program has been closed.
-
 ```bash
-./g1_ctrl --network eth0 # eth0 is the network interface name.
+./g1_ctrl --network eth0
 ```
 
 ## Acknowledgements
 
-This repository is built upon the support and contributions of the following open-source projects. Special thanks to:
-
-- [IsaacLab](https://github.com/isaac-sim/IsaacLab): The foundation for training and running codes.
-- [mujoco](https://github.com/google-deepmind/mujoco.git): Providing powerful simulation functionalities.
-- [robot_lab](https://github.com/fan-ziqi/robot_lab): Referenced for project structure and parts of the implementation.
-- [whole_body_tracking](https://github.com/HybridRobotics/whole_body_tracking): Versatile humanoid control framework for motion tracking.
+- [Unitree RL Lab](https://github.com/unitreerobotics/unitree_rl_lab): Original project by Unitree Robotics
+- [IsaacLab](https://github.com/isaac-sim/IsaacLab): Foundation for training and running codes
+- [mujoco](https://github.com/google-deepmind/mujoco): Simulation functionalities
+- [robot_lab](https://github.com/fan-ziqi/robot_lab): Referenced for project structure
+- [whole_body_tracking](https://github.com/HybridRobotics/whole_body_tracking): Versatile humanoid control framework
