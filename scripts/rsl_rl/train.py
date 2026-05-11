@@ -62,6 +62,7 @@ app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
 """Check for minimum supported RSL-RL version."""
+from isaaclab_rl.rsl_rl import handle_deprecated_rsl_rl_cfg
 
 import importlib.metadata as metadata
 import platform
@@ -122,6 +123,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     """Train with RSL-RL agent."""
     # override configurations with non-hydra CLI arguments
     agent_cfg = cli_args.update_rsl_rl_cfg(agent_cfg, args_cli)
+    agent_cfg = handle_deprecated_rsl_rl_cfg(agent_cfg, installed_version)
     env_cfg.scene.num_envs = args_cli.num_envs if args_cli.num_envs is not None else env_cfg.scene.num_envs
     agent_cfg.max_iterations = (
         args_cli.max_iterations if args_cli.max_iterations is not None else agent_cfg.max_iterations
@@ -181,17 +183,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     env = RslRlVecEnvWrapper(env, clip_actions=agent_cfg.clip_actions)
 
     # create runner from rsl-rl
-    # filter out deprecated config fields not accepted by RSL-RL 5.x
-    def _filter_model_cfg(d: dict) -> dict:
-        keep = {"hidden_dims", "activation", "obs_normalization", "distribution_cfg",
-                "class_name", "cnn_cfg", "rnn_type", "rnn_hidden_dim", "rnn_num_layers"}
-        return {k: v for k, v in d.items() if k in keep}
-
-    agent_dict = agent_cfg.to_dict()
-    for key in ("actor", "critic"):
-        if key in agent_dict and isinstance(agent_dict[key], dict):
-            agent_dict[key] = _filter_model_cfg(agent_dict[key])
-    runner = OnPolicyRunner(env, agent_dict, log_dir=log_dir, device=agent_cfg.device)
+    runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device)
     # write git state to logs
     runner.add_git_repo_to_log(__file__)
     # load the checkpoint

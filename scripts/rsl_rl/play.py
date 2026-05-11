@@ -44,6 +44,11 @@ app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
 """Rest everything follows."""
+import importlib.metadata as metadata
+
+from isaaclab_rl.rsl_rl import handle_deprecated_rsl_rl_cfg
+
+installed_version = metadata.version("rsl-rl-lib")
 
 import gymnasium as gym
 import os
@@ -56,7 +61,7 @@ import isaaclab_tasks  # noqa: F401
 from isaaclab.envs import DirectMARLEnv, multi_agent_to_single_agent
 from isaaclab.utils.assets import retrieve_file_path
 from isaaclab.utils.dict import print_dict
-from isaaclab.utils.pretrained_checkpoint import get_published_pretrained_checkpoint
+from isaaclab_rl.utils.pretrained_checkpoint import get_published_pretrained_checkpoint
 from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapper, export_policy_as_jit, export_policy_as_onnx
 from isaaclab_tasks.utils import get_checkpoint_path
 
@@ -75,6 +80,7 @@ def main():
         entry_point_key="play_env_cfg_entry_point",
     )
     agent_cfg: RslRlOnPolicyRunnerCfg = cli_args.parse_rsl_rl_cfg(args_cli.task, args_cli)
+    agent_cfg = handle_deprecated_rsl_rl_cfg(agent_cfg, installed_version)
 
     # specify directory for logging experiments
     log_root_path = os.path.join("logs", "rsl_rl", agent_cfg.experiment_name)
@@ -115,23 +121,13 @@ def main():
     env = RslRlVecEnvWrapper(env, clip_actions=agent_cfg.clip_actions)
 
     print(f"[INFO]: Loading model checkpoint from: {resume_path}")
-    # filter out deprecated config fields not accepted by RSL-RL 5.x
-    def _filter_model_cfg(d: dict) -> dict:
-        keep = {"hidden_dims", "activation", "obs_normalization", "distribution_cfg",
-                "class_name", "cnn_cfg", "rnn_type", "rnn_hidden_dim", "rnn_num_layers"}
-        return {k: v for k, v in d.items() if k in keep}
-
-    agent_dict = agent_cfg.to_dict()
-    for key in ("actor", "critic"):
-        if key in agent_dict and isinstance(agent_dict[key], dict):
-            agent_dict[key] = _filter_model_cfg(agent_dict[key])
     # load previously trained model
     if not hasattr(agent_cfg, "class_name") or agent_cfg.class_name == "OnPolicyRunner":
-        runner = OnPolicyRunner(env, agent_dict, log_dir=None, device=agent_cfg.device)
+        runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=None, device=agent_cfg.device)
     elif agent_cfg.class_name == "DistillationRunner":
         from rsl_rl.runners import DistillationRunner
 
-        runner = DistillationRunner(env, agent_dict, log_dir=None, device=agent_cfg.device)
+        runner = DistillationRunner(env, agent_cfg.to_dict(), log_dir=None, device=agent_cfg.device)
     else:
         raise ValueError(f"Unsupported runner class: {agent_cfg.class_name}")
     runner.load(resume_path)
@@ -139,27 +135,36 @@ def main():
     # obtain the trained policy for inference
     policy = runner.get_inference_policy(device=env.unwrapped.device)
 
+    # RSL-RL 5.x 下 export the trained policy to jit and onnx formats for deployment when RSL-RL 5.x  
+    export_model_dir = os.path.join(os.path.dirname(resume_path), "exported")
+    runner.export_policy_to_jit(path=export_model_dir)
+    runner.export_policy_to_onnx(path=export_model_dir)
+    print(f"[INFO] Exported policy to: {export_model_dir}")
+
+    '''
+    #  The following code exports the trained policy to ONNX and JIT formats for deployment. However, the RSL-RL version is too old, so it is commented out.
     # extract the neural network module
     # we do this in a try-except to maintain backwards compatibility.
-    try:
-        # version 2.3 onwards
-        policy_nn = runner.alg.policy
-    except AttributeError:
-        # version 2.2 and below
-        policy_nn = runner.alg.actor_critic
+    # try:
+    #     # version 2.3 onwards
+    #     policy_nn = runner.alg.policy
+    # except AttributeError:
+    #     # version 2.2 and below
+    #     policy_nn = runner.alg.actor_critic
 
-    # extract the normalizer
-    if hasattr(policy_nn, "actor_obs_normalizer"):
-        normalizer = policy_nn.actor_obs_normalizer
-    elif hasattr(policy_nn, "student_obs_normalizer"):
-        normalizer = policy_nn.student_obs_normalizer
-    else:
-        normalizer = None
+    # # extract the normalizer
+    # if hasattr(policy_nn, "actor_obs_normalizer"):
+    #     normalizer = policy_nn.actor_obs_normalizer
+    # elif hasattr(policy_nn, "student_obs_normalizer"):
+    #     normalizer = policy_nn.student_obs_normalizer
+    # else:
+    #     normalizer = None
 
-    # export policy to onnx/jit
-    export_model_dir = os.path.join(os.path.dirname(resume_path), "exported")
-    export_policy_as_jit(policy_nn, normalizer=normalizer, path=export_model_dir, filename="policy.pt")
-    export_policy_as_onnx(policy_nn, normalizer=normalizer, path=export_model_dir, filename="policy.onnx")
+    # # export policy to onnx/jit
+    # export_model_dir = os.path.join(os.path.dirname(resume_path), "exported")
+    # export_policy_as_jit(policy_nn, normalizer=normalizer, path=export_model_dir, filename="policy.pt")
+    # export_policy_as_onnx(policy_nn, normalizer=normalizer, path=export_model_dir, filename="policy.onnx")
+    '''
 
     dt = env.unwrapped.step_dt
 
