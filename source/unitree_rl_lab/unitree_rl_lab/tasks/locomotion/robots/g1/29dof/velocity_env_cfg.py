@@ -21,6 +21,13 @@ from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
 from unitree_rl_lab.assets.robots.unitree import UNITREE_G1_29DOF_CFG as ROBOT_CFG
 from unitree_rl_lab.tasks.locomotion import mdp
 
+def action_rate_l2_clipped(env, max_value: float = 100.0):
+    action_rate = torch.sum(
+        torch.square(env.action_manager.action - env.action_manager.prev_action),
+        dim=1,
+    )
+    return torch.clamp(action_rate, max=max_value)
+
 # 这里先定义一块“地形生成器”配置。
 # 可以把它理解成：训练时机器人脚下的地面长什么样、尺寸多大、难度怎么分级。
 COBBLESTONE_ROAD_CFG = terrain_gen.TerrainGeneratorCfg(
@@ -206,8 +213,13 @@ class ActionsCfg:
     # 动作空间：策略网络输出每个关节的位置命令。
     # scale=0.25 表示网络输出会被缩放，避免一开始动作过猛。
     # use_default_offset=True 表示动作是在默认关节姿态附近进行偏移。
+    # clip={".*": (-1.0, 1.0)} 表示动作会被裁剪到这个范围，防止极端值。
     JointPositionAction = mdp.JointPositionActionCfg(
-        asset_name="robot", joint_names=[".*"], scale=0.25, use_default_offset=True
+        asset_name="robot", 
+        joint_names=[".*"], 
+        scale=0.25, 
+        use_default_offset=True,
+        clip={".*": (-1.0, 1.0)},
     )
 
 
@@ -294,7 +306,10 @@ class RewardsCfg:
     base_angular_velocity = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.05)
     joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-0.001)
     joint_acc = RewTerm(func=mdp.joint_acc_l2, weight=-2.5e-7)
-    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-0.05)
+    # action_rate 也就是“动作变化率”，鼓励动作连续平滑，避免突然大幅度改变。
+    # 出现了极端 outlier，先把 action_rate 的权重减小 5–10 倍
+    # 并且在计算时加一个 clip，限制 action_rate 的最大值，防止极端值对训练造成过大干扰。
+    action_rate = RewTerm(func=mdp.action_rate_l2_clipped, weight=-0.01, params={"max_value": 100.0})
     dof_pos_limits = RewTerm(func=mdp.joint_pos_limits, weight=-5.0)
     energy = RewTerm(func=mdp.energy, weight=-2e-5)
 
