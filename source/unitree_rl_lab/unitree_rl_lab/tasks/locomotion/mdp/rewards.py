@@ -261,3 +261,11 @@ def joint_mirror(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg, mirror_joint
     # 做一个平均，避免镜像对数量变化时奖励尺度差太多。
     reward *= 1 / len(mirror_joints) if len(mirror_joints) > 0 else 0
     return reward
+
+def action_rate_l2_clipped(env, max_value: float = 100.0) -> torch.Tensor:
+    """Penalize large action changes with clipping to avoid extreme reward outliers."""
+    action_rate = torch.sum(
+        torch.square(env.action_manager.action - env.action_manager.prev_action),
+        dim=1,
+    )
+    return torch.clamp(action_rate, max=max_value)

@@ -17,8 +17,8 @@ from isaaclab.utils import configclass
 
 from unitree_rl_lab.assets.robots import unitree_actuators
 
-# UNITREE_MODEL_DIR = "path/to/unitree_model"  # Replace with the actual path to your unitree_model directory
-UNITREE_MODEL_DIR = "/home/xiao/rl_push/unitree_model"  # Replace with the actual path to your unitree_model directory
+# Replace with the actual path to your unitree_model or unitree_ros directory
+UNITREE_MODEL_DIR = "/home/xiao/rl_push/unitree_model"
 UNITREE_ROS_DIR = "/home/xiao/rl_push/unitree_ros"
 
 
@@ -94,12 +94,12 @@ class UnitreeUrdfFileCfg(sim_utils.UrdfFileCfg):
 """ Configuration for the Unitree robots."""
 
 UNITREE_GO2_CFG = UnitreeArticulationCfg(
-    # spawn=UnitreeUrdfFileCfg(
-    #     asset_path=f"{UNITREE_ROS_DIR}/robots/go2_description/urdf/go2_description.urdf",
-    # ),
-    spawn=UnitreeUsdFileCfg(
-        usd_path=f"{UNITREE_MODEL_DIR}/Go2/usd/go2.usd",
+    spawn=UnitreeUrdfFileCfg(
+        asset_path=f"{UNITREE_ROS_DIR}/robots/go2_description/urdf/go2_description.urdf",
     ),
+    # spawn=UnitreeUsdFileCfg(
+    #     usd_path=f"{UNITREE_MODEL_DIR}/Go2/usd/go2.usd",
+    # ),
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 0.4),
         joint_pos={
@@ -130,12 +130,12 @@ UNITREE_GO2_CFG = UnitreeArticulationCfg(
 )
 
 UNITREE_GO2W_CFG = UnitreeArticulationCfg(
-    # spawn=UnitreeUrdfFileCfg(
-    #     asset_path=f"{UNITREE_ROS_DIR}/robots/go2w_description/urdf/go2w_description.urdf",
-    # ),
-    spawn=UnitreeUsdFileCfg(
-        usd_path=f"{UNITREE_MODEL_DIR}/Go2W/usd/go2w.usd",
+    spawn=UnitreeUrdfFileCfg(
+        asset_path=f"{UNITREE_ROS_DIR}/robots/go2w_description/urdf/go2w_description.urdf",
     ),
+    # spawn=UnitreeUsdFileCfg(
+    #     usd_path=f"{UNITREE_MODEL_DIR}/Go2W/usd/go2w.usd",
+    # ),
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 0.45),
         joint_pos={
@@ -173,12 +173,12 @@ UNITREE_GO2W_CFG = UnitreeArticulationCfg(
 )
 
 UNITREE_B2_CFG = UnitreeArticulationCfg(
-    # spawn=UnitreeUrdfFileCfg(
-    #     asset_path=f"{UNITREE_ROS_DIR}/robots/b2_description/urdf/b2_description.urdf",
-    # ),
-    spawn=UnitreeUsdFileCfg(
-        usd_path=f"{UNITREE_MODEL_DIR}/B2/usd/b2.usd",
+    spawn=UnitreeUrdfFileCfg(
+        asset_path=f"{UNITREE_ROS_DIR}/robots/b2_description/urdf/b2_description.urdf",
     ),
+    # spawn=UnitreeUsdFileCfg(
+    #     usd_path=f"{UNITREE_MODEL_DIR}/B2/usd/b2.usd",
+    # ),
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 0.58),
         joint_pos={
@@ -212,12 +212,12 @@ UNITREE_B2_CFG = UnitreeArticulationCfg(
 )
 
 UNITREE_H1_CFG = UnitreeArticulationCfg(
-    # spawn=UnitreeUrdfFileCfg(
-    #     asset_path=f"{UNITREE_ROS_DIR}/robots/h1_description/urdf/h1.urdf",
-    # ),
-    spawn=UnitreeUsdFileCfg(
-        usd_path=f"{UNITREE_MODEL_DIR}/H1/h1/usd/h1.usd",
+    spawn=UnitreeUrdfFileCfg(
+        asset_path=f"{UNITREE_ROS_DIR}/robots/h1_description/urdf/h1.urdf",
     ),
+    # spawn=UnitreeUsdFileCfg(
+    #     usd_path=f"{UNITREE_MODEL_DIR}/H1/h1/usd/h1.usd",
+    # ),
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 1.1),
         joint_pos={

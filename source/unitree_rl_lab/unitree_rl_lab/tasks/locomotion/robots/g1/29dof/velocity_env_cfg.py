@@ -21,12 +21,6 @@ from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
 from unitree_rl_lab.assets.robots.unitree import UNITREE_G1_29DOF_CFG as ROBOT_CFG
 from unitree_rl_lab.tasks.locomotion import mdp
 
-def action_rate_l2_clipped(env, max_value: float = 100.0):
-    action_rate = torch.sum(
-        torch.square(env.action_manager.action - env.action_manager.prev_action),
-        dim=1,
-    )
-    return torch.clamp(action_rate, max=max_value)
 
 # 这里先定义一块“地形生成器”配置。
 # 可以把它理解成：训练时机器人脚下的地面长什么样、尺寸多大、难度怎么分级。
@@ -281,7 +275,6 @@ class ObservationsCfg:
 @configclass
 class RewardsCfg:
     """Reward terms for the MDP."""
-
     # reward 可以粗略分成两类：
     # 1. 鼓励做对的事，比如跟踪目标速度。
     # 2. 惩罚不稳定/不自然/高能耗的行为。

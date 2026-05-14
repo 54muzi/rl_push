@@ -37,6 +37,12 @@ CLAUDE.md
 # used to configure VS Code settings
 !.vscode
 
+# Codex
+.codex/
+AGENTS.md
+doc/codex/
+doc/user/
+
 # Outputs
 **/output/*
 **/outputs/*
