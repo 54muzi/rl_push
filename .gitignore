@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Isaac/RL outputs
+logs/
+outputs/
+runs/
+wandb/
+checkpoints/
+videos/
+recordings/
+*.pt
+*.pth
+*.onnx
+*.npz
+*.pb
+
+# External assets and repos
+unitree_ros/
+deploy/thirdparty/
+
+# Large/generated simulation files
+*.usd
+*.usda
+*.usdc
+*.usdz
+*.dmp
+*.log
+*.log.*
+
+# Local/editor
+.DS_Store
+.idea/
+.vscode/
+*.tmp
