@@ -38,3 +38,7 @@ deploy/thirdparty/
 .idea/
 .vscode/
 *.tmp
+
+# Codex
+.codex/
+AGENTS.md
