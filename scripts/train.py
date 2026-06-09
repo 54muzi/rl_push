@@ -24,7 +24,7 @@ from isaaclab.app import AppLauncher
 # local imports
 import cli_args  # isort: skip
 
-TASKS = ["G1-Locomotion-Velocity"]
+TASKS = ["G1-Locomotion-Velocity", "G1-PushCart-Velocity-v0", "G1-PickPlace-Inspire-v0", "Debug-G1"]
 
 # add argparse arguments
 parser = argparse.ArgumentParser(description="Train an RL agent with RSL-RL.")

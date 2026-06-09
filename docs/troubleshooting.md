@@ -10,7 +10,8 @@ If G1 asset loading fails, first check the configured asset path:
 
 ```bash
 grep -n "UNITREE_ROS_DIR" source/g1_loco_manipulation/assets/robots/g1.py
-ls /home/xiao/g1-loco-manipulation/unitree_ros/robots/g1_description/g1_29dof_rev_1_0.urdf
+ls source/g1_loco_manipulation/assets/robots/unitree_ros/robots/g1_description/g1_29dof_rev_1_0.urdf
+ls source/g1_loco_manipulation/assets/robots/g1-29dof_wholebody_inspire/g1_29dof_with_inspire_rev_1_0_no_hand_camera.usd
 ```
 
 For a non-standard asset location, override the default per command:

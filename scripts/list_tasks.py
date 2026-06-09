@@ -20,7 +20,7 @@ import g1_loco_manipulation.tasks  # noqa: F401, E402
 def main():
     rows = []
     for task_spec in gym.registry.values():
-        if task_spec.id.startswith("G1-"):
+        if task_spec.id.startswith(("G1-", "Debug-G1")):
             rows.append((task_spec.id, task_spec.entry_point, task_spec.kwargs.get("env_cfg_entry_point", "")))
 
     if not rows:

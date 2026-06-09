@@ -21,8 +21,11 @@ recordings/
 *.pb
 
 # External assets and repos
-unitree_ros/
+/unitree_ros/
 deploy/thirdparty/
+/assets/
+source/g1_loco_manipulation/assets/robots/unitree_ros/
+source/g1_loco_manipulation/assets/robots/g1-29dof_wholebody_inspire/
 
 # Large/generated simulation files
 *.usd

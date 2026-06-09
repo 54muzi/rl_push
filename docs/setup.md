@@ -7,10 +7,11 @@ cd /home/xiao/g1-loco-manipulation
 python -m pip install -e .
 ```
 
-Download Unitree robot descriptions separately. This local project defaults to:
+Download Unitree robot descriptions separately. This local project defaults to the ignored robot asset bundle under:
 
 ```text
-/home/xiao/g1-loco-manipulation/unitree_ros
+source/g1_loco_manipulation/assets/robots/unitree_ros
+source/g1_loco_manipulation/assets/robots/g1-29dof_wholebody_inspire
 ```
 
 For a custom location, override the default per command:

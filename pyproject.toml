@@ -12,6 +12,11 @@ dependencies = [
   "psutil",
 ]
 
+[project.optional-dependencies]
+gui = [
+  "dearpygui==2.1.0",
+]
+
 [tool.setuptools.packages.find]
 where = ["source"]
 
@@ -37,4 +42,3 @@ pythonVersion = "3.10"
 pythonPlatform = "Linux"
 reportMissingImports = "none"
 reportMissingModuleSource = "none"
-
